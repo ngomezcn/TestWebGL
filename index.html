@@ -3,11 +3,19 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Player | Orbits</title>
+    <title>Sat Orbits</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
   </head>
   <body>
+    <div class="slidecontainer">
+      <p>Velocidad simulacion: <input type="range" min="1" max="100" value="1" class="slider" id="myRange"> <button onclick="u.SendMessage('GameManager', 'globalView')">Vista global</button>      <button onclick="u.SendMessage('GameManager', 'setCamToTarget', 0)">Ver sat 0</button>
+        <button onclick="u.SendMessage('GameManager', 'setCamToTarget', 1)">Ver sat 1</button> </p>
+      
+
+
+
+    </div>
     <div id="unity-container" class="unity-desktop">
       <canvas id="unity-canvas" width=960 height=600></canvas>
       <div id="unity-loading-bar">
@@ -18,9 +26,7 @@
       </div>
       <div id="unity-warning"> </div>
       <div id="unity-footer">
-        <div id="unity-webgl-logo"></div>
         <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">Orbits</div>
       </div>
     </div>
     <script>
@@ -93,12 +99,13 @@
       } else {
         // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
 
-        canvas.style.width = "960px";
-        canvas.style.height = "600px";
+        canvas.style.width = "1960px";
+        canvas.style.height = "900px";
       }
 
       loadingBar.style.display = "block";
 
+      var u = null
       var script = document.createElement("script");
       script.src = loaderUrl;
       script.onload = () => {
@@ -107,7 +114,13 @@
         }).then((unityInstance) => {
           loadingBar.style.display = "none";
 
-          unityInstance.SendMessage('GameManager', 'setTimeScale')
+          var a = unityInstance.SendMessage('GameManager', 'setTimeScale', 1)
+          var slider = document.getElementById("myRange");
+          u = unityInstance
+          slider.oninput = function() {
+            console.log(slider.value)
+            unityInstance.SendMessage('GameManager', 'setTimeScale', parseInt(slider.value))
+          }
 
           fullscreenButton.onclick = () => {
             unityInstance.SetFullscreen(1);
@@ -119,5 +132,8 @@
       document.body.appendChild(script);
       
     </script>
+
+
+
   </body>
 </html>
