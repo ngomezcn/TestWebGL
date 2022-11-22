@@ -9,8 +9,10 @@
   </head>
   <body>
     <div class="slidecontainer">
-      <p>Velocidad simulacion: <input type="range" min="1" max="100" value="1" class="slider" id="myRange"> <button onclick="u.SendMessage('GameManager', 'globalView')">Vista global</button>      <button onclick="u.SendMessage('GameManager', 'setCamToTarget', 0)">Ver sat 0</button>
-        <button onclick="u.SendMessage('GameManager', 'setCamToTarget', 1)">Ver sat 1</button> </p>
+      <p>Velocidad simulacion: <input type="range" min="1" max="100" value="1" class="slider" id="myRange"> 
+        <button onclick="u.SendMessage('GameManager', 'globalView')">Vista global</button>      
+        <button onclick="u.SendMessage('GameManager', 'setCamToTarget', index--)">Ver sat -</button>
+        <button onclick="u.SendMessage('GameManager', 'setCamToTarget', index++)">Ver sat +</button> </p>
         <canvas id="unity-canvas" width=960 height=600></canvas>
         <div id="unity-loading-bar">
           <div id="unity-logo"></div>
@@ -24,6 +26,8 @@
         </div>
     </div>
     <script>
+      var index = 0;
+
       var container = document.querySelector("#unity-container");
       var canvas = document.querySelector("#unity-canvas");
       var loadingBar = document.querySelector("#unity-loading-bar");
@@ -124,6 +128,10 @@
         });
       };
       document.body.appendChild(script);
+      
     </script>
+
+
+
   </body>
 </html>
