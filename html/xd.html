@@ -1,0 +1,625 @@
+<html data-lt-installed="true">
+  <head>
+    <script type="text/javascript">
+      (function () {
+        try {
+          const CART_URL_REGEX = [/cart/, /checkout/, /bag/, /basket/];
+          const { fetch: originalFetch } = window;
+
+          window.fetch = async (...args) => {
+            let [resource, config] = args;
+            const response = await originalFetch(resource, config);
+            const clonedResponse = response.clone();
+
+            if (typeof resource === "string") {
+              urlNoQueryStrings = resource.split("?")[0];
+            } else {
+              urlNoQueryStrings = (resource?.url || "").split("?")[0];
+            }
+
+            const contentType = clonedResponse.headers.get("Content-Type");
+            if (
+              CART_URL_REGEX.some(
+                (m) => urlNoQueryStrings && m.test(urlNoQueryStrings)
+              ) &&
+              contentType.includes("json")
+            ) {
+              setTimeout(async () => {
+                const responseBody = await clonedResponse.text();
+
+                if (responseBody)
+                  window.postMessage(
+                    { type: "CART_EVENT_DETECTED", cart: responseBody },
+                    "*"
+                  );
+              }, 1000);
+            }
+
+            return response;
+          };
+
+          let XHR = XMLHttpRequest.prototype;
+          let send = XHR.send;
+          let open = XHR.open;
+          XHR.open = function (method, url) {
+            this.url = url; // the request url
+            return open.apply(this, arguments);
+          };
+          XHR.send = function () {
+            this.addEventListener("load", function () {
+              const urlNoQueryStrings = this.url.split("?")[0];
+              const contentType = this.getResponseHeader("Content-Type");
+              if (
+                CART_URL_REGEX.some(
+                  (m) => urlNoQueryStrings && m.test(urlNoQueryStrings)
+                ) &&
+                contentType.includes("json")
+              ) {
+                if (this.response)
+                  window.postMessage(
+                    { type: "CART_EVENT_DETECTED", cart: this.response },
+                    "*"
+                  );
+              }
+            });
+            return send.apply(this, arguments);
+          };
+        } catch (error) {
+          console.log({ error });
+        }
+      })();
+    </script>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link href="css/styles.css" rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/css/bootstrap.min.css"
+      integrity="sha384-y3tfxAZXuh4HwSYylfB+J125MxIs6mR5FOHamPBG064zB+AFeWH94NdvaCBm8qnd"
+      crossorigin="anonymous"
+    />
+    <title>satellites</title>
+    <style>
+      [_nghost-smx-c52] {
+        font-family: Open Sans, sans-serif;
+        color: #121212;
+      }
+    </style>
+    <style type="text/css">
+      @font-face {
+        font-family: Roboto;
+        src: url("chrome-extension://mcgbeeipkmelnpldkobichboakdfaeon/css/Roboto-Regular.ttf");
+      }
+    </style>
+  </head>
+  <body>
+    <div id="unity-container" class="unity-desktop">
+      <canvas id="unity-canvas" width="960" height="600"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container px-5">
+        <a class="navbar-brand" href="/">SkyTracker</a
+        ><button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+            <li class="nav-item">
+              <a class="nav-link" href="satellites">Satellites</a>
+            </li>
+            <li class="nav-item"><a class="nav-link" href="api">API</a></li>
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                id="navbarDropdownBlog"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                >Account</a
+              >
+              <ul
+                class="dropdown-menu dropdown-menu-end"
+                aria-labelledby="navbarDropdownBlog"
+              >
+                <li>
+                  <a class="dropdown-item" href="account/tracking_list"
+                    >My tracking list</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item" href="account/settings">Settings</a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container px-5 card-columns">
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=5';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=5"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">VANGUARD 1</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1958-03-17"</p>
+          <p class="card-subtitle">Norad ID: "5"</p>
+          <p class="card-subtitle">Sat identifier: "1958-002B"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=11';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=11"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">VANGUARD 2</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1959-02-17"</p>
+          <p class="card-subtitle">Norad ID: "11"</p>
+          <p class="card-subtitle">Sat identifier: "1959-001A"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=12';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=12"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">VANGUARD R/B</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1959-02-17"</p>
+          <p class="card-subtitle">Norad ID: "12"</p>
+          <p class="card-subtitle">Sat identifier: "1959-001B"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=16';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=16"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">VANGUARD R/B</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1958-03-17"</p>
+          <p class="card-subtitle">Norad ID: "16"</p>
+          <p class="card-subtitle">Sat identifier: "1958-002A"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=20';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=20"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">VANGUARD 3</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1959-09-18"</p>
+          <p class="card-subtitle">Norad ID: "20"</p>
+          <p class="card-subtitle">Sat identifier: "1959-007A"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=22';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=22"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">EXPLORER 7</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1959-10-13"</p>
+          <p class="card-subtitle">Norad ID: "22"</p>
+          <p class="card-subtitle">Sat identifier: "1959-009A"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=29';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=29"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">TIROS 1</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1960-04-01"</p>
+          <p class="card-subtitle">Norad ID: "29"</p>
+          <p class="card-subtitle">Sat identifier: "1960-002B"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=45';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=45"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">TRANSIT 2A</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1960-06-22"</p>
+          <p class="card-subtitle">Norad ID: "45"</p>
+          <p class="card-subtitle">Sat identifier: "1960-007A"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=46';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=46"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">SOLRAD 1 (GREB)</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1960-06-22"</p>
+          <p class="card-subtitle">Norad ID: "46"</p>
+          <p class="card-subtitle">Sat identifier: "1960-007B"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=47';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=47"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">THOR ABLESTAR R/...</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1960-06-22"</p>
+          <p class="card-subtitle">Norad ID: "47"</p>
+          <p class="card-subtitle">Sat identifier: "1960-007C"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=50';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=50"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">DELTA 1 R/B</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1960-08-12"</p>
+          <p class="card-subtitle">Norad ID: "50"</p>
+          <p class="card-subtitle">Sat identifier: "1960-009B"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=51';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=51"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">ECHO 1 DEB (META...</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1960-08-12"</p>
+          <p class="card-subtitle">Norad ID: "51"</p>
+          <p class="card-subtitle">Sat identifier: "1960-009C"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=52';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=52"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">ECHO 1 DEB (MYLA...</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1960-08-12"</p>
+          <p class="card-subtitle">Norad ID: "52"</p>
+          <p class="card-subtitle">Sat identifier: "1960-009D"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=53';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=53"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">ECHO 1 DEB (META...</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1960-08-12"</p>
+          <p class="card-subtitle">Norad ID: "53"</p>
+          <p class="card-subtitle">Sat identifier: "1960-009E"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=58';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=58"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">COURIER 1B</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1960-10-04"</p>
+          <p class="card-subtitle">Norad ID: "58"</p>
+          <p class="card-subtitle">Sat identifier: "1960-013A"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=59';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=59"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">THOR ABLESTAR R/...</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1960-10-04"</p>
+          <p class="card-subtitle">Norad ID: "59"</p>
+          <p class="card-subtitle">Sat identifier: "1960-013B"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=82';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=82"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">SCOUT X-1 R/B</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1961-02-16"</p>
+          <p class="card-subtitle">Norad ID: "82"</p>
+          <p class="card-subtitle">Sat identifier: "1961-004B"</p>
+        </div>
+      </div>
+      <br />
+      <div
+        class="card"
+        onclick="window.location = '/view_satellite?id=85';"
+        style="width: 18rem"
+      >
+        <img
+          class="card-img-top"
+          src="https://www.heavens-above.com/orbitdisplay.aspx?icon=iss&amp;width=300&amp;height=300&amp;mode=A&amp;satid=85"
+          alt="Card image cap"
+        />
+        <div class="card-block px-2">
+          <h4 class="card-title pt-lg-2">SCOUT X-1 DEB</h4>
+        </div>
+        <div class="card-footer w-100 text-muted">
+          <p class="card-subtitle">Launch date: "1961-02-16"</p>
+          <p class="card-subtitle">Norad ID: "85"</p>
+          <p class="card-subtitle">Sat identifier: "1961-004C"</p>
+        </div>
+      </div>
+      <br />
+    </div>
+    <section class="py-5 text-center">
+      <nav>
+        <ul class="pagination">
+          <li class="page-item disabled">
+            <a class="page-link" href="/satellites?page=0" tabindex="-1"
+              >Previous</a
+            >
+          </li>
+          <li class="page-item active">
+            <a class="page-link" href="#"
+              >1<span class="sr-only">(current)</span></a
+            >
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="/satellites?page=2">2</a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="/satellites?page=3">3</a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="/satellites?page=2">Next</a>
+          </li>
+        </ul>
+      </nav>
+    </section>
+    <footer class="bg-dark py-4 mt-auto">
+      <div class="container px-5">
+        <div
+          class="row align-items-center justify-content-between flex-column flex-sm-row"
+        >
+          <div class="col-auto">
+            <div class="small m-0 text-white">Copyright © SkyTracker 2022</div>
+          </div>
+          <div class="col-auto">
+            <a class="link-light small" href="#!">Privacy</a
+            ><span class="text-white mx-1">·</span
+            ><a class="link-light small" href="#!">Terms</a
+            ><span class="text-white mx-1">·</span
+            ><a class="link-light small" href="#!">Contact</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/scripts.js"></script>
+
+    <script>
+      var returnedSuggestion = "";
+      let editor, doc, cursor, line, pos;
+      document.addEventListener("keydown", (event) => {
+        setTimeout(() => {
+          editor = event.target.closest(".CodeMirror");
+          if (editor) {
+            doc = editor.CodeMirror.getDoc();
+            cursor = doc.getCursor();
+            line = doc.getLine(cursor.line);
+            pos = { line: cursor.line, ch: line.length };
+            if (event.key == "Enter") {
+              var query = doc.getRange(
+                { line: Math.max(0, cursor.line - 10), ch: 0 },
+                { line: cursor.line, ch: 0 }
+              );
+              window.postMessage({
+                source: "getSuggestion",
+                payload: { data: query },
+              });
+              //displayGrey(query)
+            } else if (event.key == "ArrowRight") {
+              acceptTab(returnedSuggestion);
+            }
+          }
+        }, 0);
+      });
+
+      function acceptTab(text) {
+        if (suggestionDisplayed) {
+          doc.replaceRange(text, pos);
+          suggestionDisplayed = false;
+        }
+      }
+      function displayGrey(text) {
+        var element = document.createElement("span");
+        element.innerText = text;
+        element.style = "color:grey";
+        var lineIndex = pos.line;
+        editor
+          .getElementsByClassName("CodeMirror-line")
+          [lineIndex].appendChild(element);
+        suggestionDisplayed = true;
+      }
+      window.addEventListener("message", (event) => {
+        if (event.source !== window) return;
+        if (event.data.source == "return") {
+          returnedSuggestion = event.data.payload.data;
+          displayGrey(event.data.payload.data);
+        }
+      });
+    </script>
+  </body>
+  <app-content ng-version="14.2.0"></app-content>
+</html>
